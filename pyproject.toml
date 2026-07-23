@@ -1,0 +1,30 @@
+[project]
+name = "onionlens"
+version = "0.1.0"
+description = "AI correlation layer over existing onion search engines"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Chad Parnin" }]
+keywords = ["threat-intelligence", "osint", "tor", "dark-web", "ahmia"]
+dependencies = [
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    "openai>=1.30",
+    "numpy>=1.26",
+    "rich>=13.7",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "bandit>=1.7", "pip-audit>=2.7"]
+
+[project.scripts]
+onionlens = "onionlens.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

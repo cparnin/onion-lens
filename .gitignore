@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Local knowledge base
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# OS
+.DS_Store
