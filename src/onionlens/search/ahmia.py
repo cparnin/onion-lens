@@ -1,9 +1,14 @@
 """Ahmia adapter.
 
 Ahmia runs on the clearnet, so this needs no Tor. It filters abuse material
-upstream; we screen again locally as defense in depth. Parsing is deliberately
-defensive because a search engine's HTML can change without notice. If Ahmia
-changes its markup, only this file needs updating.
+upstream; we screen again locally as defense in depth.
+
+Ahmia plants a hidden per-session token in its search form. A search request
+without that token is redirected to the homepage and returns nothing, so the
+adapter fetches the form first (in a persistent session) and echoes the token
+back. Parsing is deliberately defensive because a search engine's HTML can
+change without notice. If Ahmia changes its markup, only this file needs
+updating.
 """
 
 import time
@@ -25,14 +30,38 @@ class AhmiaSearch(SearchEngine):
         self.cfg = config
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": config.user_agent})
+        self._tokens: dict | None = None
+
+    @staticmethod
+    def parse_tokens(html: str) -> dict:
+        """Extract hidden form inputs (the anti-scrape token) from a page."""
+        soup = BeautifulSoup(html, "html.parser")
+        form = soup.select_one("form#searchForm") or soup.select_one("form")
+        tokens: dict = {}
+        if form:
+            for inp in form.select("input[type=hidden]"):
+                name = inp.get("name")
+                if name:
+                    tokens[name] = inp.get("value", "")
+        return tokens
+
+    def _get_tokens(self) -> dict:
+        if self._tokens is None:
+            resp = self.session.get(
+                f"{self.cfg.ahmia_base_url}/", timeout=self.cfg.request_timeout
+            )
+            resp.raise_for_status()
+            self._tokens = self.parse_tokens(resp.text)
+        return self._tokens
 
     def search(self, query: str, limit: int = 25) -> list[SearchResult]:
         allowed, _ = is_allowed(query)
         if not allowed:
             return []
+        params = {"q": query, **self._get_tokens()}
         resp = self.session.get(
             f"{self.cfg.ahmia_base_url}/search/",
-            params={"q": query},
+            params=params,
             timeout=self.cfg.request_timeout,
         )
         resp.raise_for_status()

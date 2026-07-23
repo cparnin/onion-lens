@@ -17,10 +17,17 @@ SAMPLE_HTML = """
 </ol>
 """
 
+HOME_HTML = """
+<form id="searchForm" action="/search/" method="get">
+  <input id="id_q" type="search" name="q">
+  <input type="hidden" name="9f5712" value="ef2dcd">
+  <input type="submit" value="Search">
+</form>
+"""
+
 
 def make_engine():
-    cfg = Config(openai_api_key="test")
-    return AhmiaSearch(cfg)
+    return AhmiaSearch(Config(openai_api_key="test"))
 
 
 def test_parses_result_fields():
@@ -35,3 +42,14 @@ def test_parses_result_fields():
 
 def test_empty_html_returns_nothing():
     assert make_engine().parse("<ol></ol>") == []
+
+
+def test_parse_tokens_extracts_hidden_field():
+    tokens = AhmiaSearch.parse_tokens(HOME_HTML)
+    assert tokens == {"9f5712": "ef2dcd"}
+
+
+def test_respects_limit():
+    many = "<ol>" + SAMPLE_HTML * 5 + "</ol>"
+    results = make_engine().parse(many, limit=2)
+    assert len(results) == 2

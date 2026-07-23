@@ -11,6 +11,7 @@ from .config import Config
 from .correlate import correlate
 from .extract import extract_entities
 from .models import dedupe
+from .pricing import CostMeter
 from .safety import is_allowed
 from .search import AhmiaSearch
 from .store import Store
@@ -19,7 +20,7 @@ console = Console()
 
 
 def _render_results(results) -> None:
-    table = Table(title="Indexed onion services", show_lines=False, header_style="bold cyan")
+    table = Table(title="Indexed onion services", header_style="bold cyan")
     table.add_column("#", style="dim", width=3)
     table.add_column("Title", style="bold", max_width=40)
     table.add_column("Address", style="green", max_width=42)
@@ -30,30 +31,25 @@ def _render_results(results) -> None:
 
 
 def _render_correlation(report: dict) -> None:
-    console.print(Panel(report.get("summary", ""), title="AI summary", border_style="cyan"))
-
-    clusters = report.get("clusters") or []
-    if clusters:
-        for c in clusters:
-            body = f"[bold]{c.get('theme', '')}[/bold]\n{c.get('note', '')}\n" + "\n".join(
-                f"  - {a}" for a in c.get("addresses", [])
+    if report.get("summary"):
+        console.print(Panel(report["summary"], title="AI summary", border_style="cyan"))
+    for c in report.get("clusters") or []:
+        body = f"[bold]{c.get('theme', '')}[/bold]\n{c.get('note', '')}\n" + "\n".join(
+            f"  - {a}" for a in c.get("addresses", [])
+        )
+        console.print(Panel(body, border_style="blue", title="cluster"))
+    for s in report.get("likely_duplicates_or_scams") or []:
+        console.print(
+            Panel(
+                f"{', '.join(s.get('addresses', []))}\n{s.get('reason', '')}",
+                title="possible duplicate or scam",
+                border_style="yellow",
             )
-            console.print(Panel(body, border_style="blue", title="cluster"))
-
-    scams = report.get("likely_duplicates_or_scams") or []
-    if scams:
-        for s in scams:
-            console.print(
-                Panel(
-                    f"{', '.join(s.get('addresses', []))}\n{s.get('reason', '')}",
-                    title="possible duplicate or scam",
-                    border_style="yellow",
-                )
-            )
-
+        )
     followups = report.get("suggested_followups") or []
     if followups:
-        console.print(Panel("\n".join(f"- {f}" for f in followups), title="suggested follow-ups", border_style="magenta"))
+        console.print(Panel("\n".join(f"- {f}" for f in followups),
+                            title="suggested follow-ups", border_style="magenta"))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -68,16 +64,19 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     config = Config.load()
+    meter = CostMeter()
 
     allowed, reason = is_allowed(args.query)
     if not allowed:
         console.print(f"[red]Refused:[/red] {reason}")
         return 2
 
+    limit = max(1, min(args.limit, config.max_limit))
+
     engine = AhmiaSearch(config)
     console.print(f"[dim]Searching Ahmia for[/dim] [bold]{args.query}[/bold] ...")
     try:
-        results = dedupe(engine.search(args.query, limit=args.limit))
+        results = dedupe(engine.search(args.query, limit=limit))
     except Exception as exc:  # network or parse failure should not crash the tool
         console.print(f"[red]Search failed:[/red] {exc}")
         return 1
@@ -98,8 +97,8 @@ def main(argv=None) -> int:
         if config.has_openai:
             try:
                 store = Store(config)
-                added = store.upsert(results)
-                console.print(f"[dim]Stored {added} results (knowledge base now holds {store.count()}).[/dim]")
+                added = store.upsert(results, meter)
+                console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
                 store.close()
             except Exception as exc:
                 console.print(f"[yellow]Store skipped:[/yellow] {exc}")
@@ -112,11 +111,12 @@ def main(argv=None) -> int:
         else:
             console.print("[dim]Correlating ...[/dim]")
             try:
-                report = correlate(config, args.query, results)
+                report = correlate(config, args.query, results, meter=meter)
                 _render_correlation(report)
             except Exception as exc:
                 console.print(f"[yellow]Correlation skipped:[/yellow] {exc}")
 
+    console.print(f"[dim]Cost this run: {meter.summary()}[/dim]")
     return 0
 
 

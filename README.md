@@ -55,11 +55,20 @@ onionlens "breach forum" --no-ai      # skip the AI step, still get results + en
 Every run stores results in a local `onionlens.db` so correlation improves as
 your knowledge base grows across sessions.
 
-## Cost
+## Cost and size guardrails
 
 Using OpenAI with the default models (`gpt-4o-mini` + `text-embedding-3-small`),
 a typical query costs well under a cent. Heavy daily use lands in the low single
-digits of dollars per month.
+digits of dollars per month. Every run prints exactly what it cost.
+
+Built-in limits keep both the bill and the database bounded:
+
+- `--limit` caps results fetched per run (default 25, hard ceiling 100).
+- Only the first `max_correlate` results (default 40) are sent to the AI, and
+  descriptions are truncated, so per-run token cost is bounded.
+- The knowledge base is capped at `max_rows` (default 5000, set via
+  `ONIONLENS_MAX_ROWS`). Oldest rows are pruned on every write, so the SQLite
+  file cannot run away. At the default cap the database stays around 30-40 MB.
 
 ## Safety
 

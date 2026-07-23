@@ -4,17 +4,19 @@ Stores every result plus its embedding in a local SQLite file so correlation can
 work across sessions, not just within one query. Vector similarity uses numpy
 cosine over stored embeddings, which is instant at personal scale and keeps the
 dependency list small (no vector database needed).
+
+Size is bounded: the table is capped at config.max_rows and the oldest rows are
+pruned on each write, so the database cannot grow without limit.
 """
 
-import json
 import sqlite3
 import struct
-from typing import Optional
 
 import numpy as np
 
 from .config import Config
 from .models import SearchResult
+from .pricing import CostMeter
 
 
 def _pack(vec: list[float]) -> bytes:
@@ -57,15 +59,19 @@ class Store:
         )
         self.conn.commit()
 
-    def _embed(self, texts: list[str]) -> list[list[float]]:
+    def _embed(self, texts: list[str], meter: CostMeter | None = None) -> list[list[float]]:
         resp = self.client.embeddings.create(model=self.cfg.embedding_model, input=texts)
+        if meter is not None:
+            usage = getattr(resp, "usage", None)
+            tokens = getattr(usage, "total_tokens", 0) if usage else 0
+            meter.add("embeddings", self.cfg.embedding_model, tokens)
         return [d.embedding for d in resp.data]
 
-    def upsert(self, results: list[SearchResult]) -> int:
+    def upsert(self, results: list[SearchResult], meter: CostMeter | None = None) -> int:
         if not results:
             return 0
         texts = [f"{r.title}. {r.description}" for r in results]
-        vectors = self._embed(texts)
+        vectors = self._embed(texts, meter)
         for result, vec in zip(results, vectors):
             self.conn.execute(
                 """
@@ -88,23 +94,37 @@ class Store:
                 ),
             )
         self.conn.commit()
+        self._prune()
         return len(results)
 
-    def semantic_search(self, query: str, k: int = 10) -> list[dict]:
+    def _prune(self) -> int:
+        """Keep only the newest max_rows rows. Returns number deleted."""
+        cur = self.conn.execute(
+            """
+            DELETE FROM results
+            WHERE rowid NOT IN (
+                SELECT rowid FROM results ORDER BY rowid DESC LIMIT ?
+            )
+            """,
+            (self.cfg.max_rows,),
+        )
+        self.conn.commit()
+        return cur.rowcount
+
+    def semantic_search(self, query: str, k: int = 10, meter: CostMeter | None = None) -> list[dict]:
         rows = self.conn.execute(
             "SELECT address, title, onion_url, description, source, last_seen, embedding FROM results"
         ).fetchall()
         if not rows:
             return []
-        query_vec = np.array(self._embed([query])[0], dtype=np.float32)
+        query_vec = np.array(self._embed([query], meter)[0], dtype=np.float32)
         query_norm = query_vec / (np.linalg.norm(query_vec) + 1e-9)
 
         scored = []
         for row in rows:
             vec = _unpack(row[6])
             vec = vec / (np.linalg.norm(vec) + 1e-9)
-            score = float(np.dot(query_norm, vec))
-            scored.append((score, row))
+            scored.append((float(np.dot(query_norm, vec)), row))
 
         scored.sort(key=lambda x: x[0], reverse=True)
         return [
