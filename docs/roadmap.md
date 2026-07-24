@@ -18,9 +18,13 @@ Key differences from Ahmia to plan for:
   example a Windows machine on the LAN) and point the adapter at that host's
   SOCKS port. Configure via a `TOR_SOCKS_PROXY` env var, for example
   `socks5h://192.168.1.50:9050`.
-- **Unfiltered.** Torch does not filter abuse material. The existing safety gate
-  must stay in the path, and a hash-based image filter should be added before
-  Torch is enabled by default.
+- **No API key needed.** Torch is free to query. The only requirement is routing
+  through Tor. (Haystak, listed under Later, is the one with a paid API.)
+- **Unfiltered.** Torch does not filter abuse material. The safety gate must stay
+  in the path. By design the gate blocks only CSAM-category content; all other
+  material (markets, fraud, breach data, and so on) passes through untouched. A
+  hash-based image filter should be added before Torch is enabled by default so
+  that no child content is ever shown.
 - **Noisier index.** Expect more duplicates, ads, and dead links. Lean on the
   existing dedupe and on the AI scam/duplicate flagging.
 

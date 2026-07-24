@@ -87,6 +87,10 @@ def main(argv=None) -> int:
         console.print("[yellow]No results found.[/yellow]")
         return 0
 
+    if engine.degraded:
+        console.print("[yellow]Note: parsed via fallback. Ahmia's markup may have "
+                      "changed; results could be incomplete (see search/ahmia.py).[/yellow]")
+
     _render_results(results)
 
     blob = " ".join(f"{r.title} {r.description} {r.onion_url}" for r in results)
