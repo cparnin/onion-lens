@@ -4,6 +4,11 @@
 
 # OnionLens
 
+[![CI](https://github.com/cparnin/onion-lens/actions/workflows/ci.yml/badge.svg)](https://github.com/cparnin/onion-lens/actions/workflows/ci.yml)
+[![Security](https://github.com/cparnin/onion-lens/actions/workflows/security.yml/badge.svg)](https://github.com/cparnin/onion-lens/actions/workflows/security.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 An AI correlation layer over existing onion search engines. Ask in plain
 English, get back correlated findings instead of a raw keyword dump.
 

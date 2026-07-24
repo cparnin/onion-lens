@@ -44,6 +44,14 @@ pip-audit
 pytest
 ```
 
+## Automated maintenance
+
+Dependabot (`.github/dependabot.yml`) opens weekly pull requests to update Python
+dependencies and GitHub Actions versions. CI and the security scan run against
+each of those pull requests, so the project stays current and patched even if it
+is left untouched for months. Review and merge the pull requests, or enable
+auto-merge in the repository settings for a fully hands-off flow.
+
 ## Reporting
 
 Found a security or safety issue? Open a private report to the repository owner
