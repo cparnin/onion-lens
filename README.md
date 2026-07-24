@@ -44,7 +44,7 @@ Full diagram in [docs/architecture.md](docs/architecture.md).
 Requires Python 3.10+.
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/cparnin/onion-lens.git
 cd onion-lens
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
