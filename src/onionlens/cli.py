@@ -20,11 +20,13 @@ console = Console()
 
 
 def _render_results(results) -> None:
-    table = Table(title="Indexed onion services", header_style="bold cyan")
+    # show_lines + overflow="fold" so long onion addresses wrap in full and stay
+    # copy-pasteable instead of being truncated to fit the terminal width.
+    table = Table(title="Indexed onion services", header_style="bold cyan", show_lines=True)
     table.add_column("#", style="dim", width=3)
-    table.add_column("Title", style="bold", max_width=40)
-    table.add_column("Address", style="green", max_width=42)
-    table.add_column("Last seen", style="dim")
+    table.add_column("Title", style="bold", max_width=34, overflow="fold")
+    table.add_column("Onion address", style="green", overflow="fold")
+    table.add_column("Last seen", style="dim", no_wrap=True)
     for i, r in enumerate(results, 1):
         table.add_row(str(i), r.title, r.address, r.last_seen or "-")
     console.print(table)
