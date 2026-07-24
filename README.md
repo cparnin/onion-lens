@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/hero.png" alt="OnionLens" width="100%">
+</p>
+
 # OnionLens
 
 An AI correlation layer over existing onion search engines. Ask in plain
