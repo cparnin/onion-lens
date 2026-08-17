@@ -220,12 +220,12 @@ class Store:
         if not top:
             return []
 
+        # placeholders is only "?,?,..." (one per address); the addresses
+        # themselves are bound parameters, so this is not SQL injection.
+        cols = "address, title, onion_url, description, source, last_seen"
         placeholders = ",".join("?" * len(top))
-        rows = self.conn.execute(
-            "SELECT address, title, onion_url, description, source, last_seen "
-            "FROM results WHERE address IN (" + placeholders + ")",
-            top,
-        ).fetchall()
+        sql = f"SELECT {cols} FROM results WHERE address IN ({placeholders})"  # nosec B608
+        rows = self.conn.execute(sql, top).fetchall()
         by_address = {row[0]: row for row in rows}
         return [
             {
