@@ -12,7 +12,7 @@ def make(n):
 
 
 def test_correlate_parses_json_and_meters(fake_client):
-    cfg = Config(openai_api_key="x")
+    cfg = Config(anthropic_api_key="x")
     meter = CostMeter()
     report = correlate(cfg, "q", make(3), client=fake_client, meter=meter)
     assert report["summary"] == "ok"
@@ -20,13 +20,13 @@ def test_correlate_parses_json_and_meters(fake_client):
 
 
 def test_correlate_caps_input(fake_client):
-    cfg = Config(openai_api_key="x", max_correlate=5)
+    cfg = Config(anthropic_api_key="x", max_correlate=5)
     # should not raise even with many results; cap applied internally
     report = correlate(cfg, "q", make(50), client=fake_client)
     assert "summary" in report
 
 
 def test_correlate_empty_results():
-    cfg = Config(openai_api_key="x")
+    cfg = Config(anthropic_api_key="x")
     report = correlate(cfg, "q", [])
     assert report["summary"] == "No results to correlate."

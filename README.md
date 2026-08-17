@@ -33,8 +33,8 @@ your query
   -> Ahmia (clearnet, no Tor needed)
   -> safety screen + dedupe
   -> local entity extraction (wallets, emails, PGP, onion links)
-  -> persistent knowledge base (SQLite + embeddings)
-  -> AI correlation (OpenAI): clusters, entities, likely duplicates, follow-ups
+  -> persistent knowledge base (SQLite FTS5 + local embeddings, fully local)
+  -> AI correlation (Claude): clusters, entities, likely duplicates, follow-ups
 ```
 
 Full diagram in [docs/architecture.md](docs/architecture.md).
@@ -48,7 +48,7 @@ git clone https://github.com/cparnin/onion-lens.git
 cd onion-lens
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
-cp .env.example .env      # then paste your OpenAI key into .env
+cp .env.example .env      # then paste your Anthropic key into .env
 ```
 
 No Tor is required. Ahmia is reached over normal HTTPS.
@@ -66,8 +66,10 @@ your knowledge base grows across sessions.
 
 ## Cost and size guardrails
 
-Using OpenAI with the default models (`gpt-4o-mini` + `text-embedding-3-small`),
-a typical query costs well under a cent. Heavy daily use lands in the low single
+Using the default model (`claude-haiku-4-5`), a typical query costs about a
+cent. The knowledge base uses local SQLite full-text search plus local embeddings
+(fastembed, a one-time ~130MB model download), so storing and searching past
+results costs nothing. Heavy daily use lands in the low single
 digits of dollars per month. Every run prints exactly what it cost.
 
 Built-in limits keep both the bill and the database bounded:

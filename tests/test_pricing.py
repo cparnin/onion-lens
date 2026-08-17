@@ -2,8 +2,8 @@ from onionlens.pricing import CostMeter, cost
 
 
 def test_cost_known_model():
-    # 1M input tokens of gpt-4o-mini = $0.15
-    assert round(cost("gpt-4o-mini", 1_000_000, 0), 2) == 0.15
+    # 1M input tokens of claude-haiku-4-5 = $1.00
+    assert round(cost("claude-haiku-4-5", 1_000_000, 0), 2) == 1.00
 
 
 def test_cost_unknown_model_is_zero():
@@ -12,10 +12,9 @@ def test_cost_unknown_model_is_zero():
 
 def test_meter_totals():
     m = CostMeter()
-    m.add("embeddings", "text-embedding-3-small", 1_000_000)
-    m.add("correlation", "gpt-4o-mini", 1_000_000, 1_000_000)
-    # 0.02 + 0.15 + 0.60
-    assert round(m.total, 2) == 0.77
+    m.add("correlation", "claude-haiku-4-5", 1_000_000, 1_000_000)
+    # 1.00 input + 5.00 output
+    assert round(m.total, 2) == 6.00
     assert "$" in m.summary()
 
 

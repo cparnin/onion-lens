@@ -21,14 +21,14 @@ crawl, authenticate, transact, or fetch content behind access walls.
 
 ## Secrets
 
-- The OpenAI key lives in a gitignored `.env`. Never commit it. Never add it as a
+- The Anthropic key lives in a gitignored `.env`. Never commit it. Never add it as a
   GitHub secret unless a workflow genuinely needs it (CI here does not).
 
 ## Testing and checks
 
 - Every change ships with tests. Run `make test` (pytest) and `make security`
   (bandit + pip-audit) before committing.
-- Logic tests use the fake OpenAI client in `tests/conftest.py`, so they need no
+- Logic tests use the fake Anthropic client in `tests/conftest.py`, so they need no
   key and no network. Keep it that way; do not make the test suite call live APIs.
 
 ## Docs
@@ -38,7 +38,7 @@ crawl, authenticate, transact, or fetch content behind access walls.
 
 ## Cost and size discipline
 
-- Keep the OpenAI cost bounded: respect `max_correlate`, the `--limit` ceiling,
+- Keep the Anthropic API cost bounded: respect `max_correlate`, the `--limit` ceiling,
   and truncated inputs. Every run reports real cost via the CostMeter.
 - Keep the knowledge base bounded: `max_rows` with pruning on write. Do not remove
   the cap.

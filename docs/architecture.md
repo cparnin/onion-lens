@@ -14,8 +14,8 @@ flowchart TD
     E -- drop --> D
     E -- keep --> F[Dedupe by onion address]
     F --> G[Local entity extraction<br/>wallets, emails, PGP, onions]
-    F --> H[Knowledge base<br/>SQLite + embeddings]
-    F --> I[AI correlation<br/>OpenAI]
+    F --> H[Knowledge base<br/>SQLite FTS5 + local embeddings]
+    F --> I[AI correlation<br/>Claude]
     G --> J[Rendered report]
     H --> J
     I --> J
@@ -36,10 +36,13 @@ flowchart TD
    surfaced under different URLs collapse to one entry.
 6. **Entity extraction** (`extract.py`). Pure local regex. Runs without any API
    call, so `--no-ai` still returns structured value.
-7. **Knowledge base** (`store.py`). SQLite plus numpy cosine over stored
-   embeddings. No external vector database. Accumulates across sessions.
-8. **AI correlation** (`correlate.py`). One OpenAI call returns clusters, shared
-   entities, likely duplicates or scams, and suggested follow-ups as JSON.
+7. **Knowledge base** (`store.py`). Hybrid search: SQLite FTS5 with BM25 for
+   exact keywords, plus local embeddings (fastembed, ONNX) for fuzzy semantic
+   matches, merged with reciprocal rank fusion. Fully local, no API calls.
+   Degrades to keyword-only if the embedding model is unavailable.
+8. **AI correlation** (`correlate.py`). One Anthropic API call (Claude) returns
+   clusters, shared entities, likely duplicates or scams, and suggested
+   follow-ups as schema-enforced JSON via structured outputs.
 
 ## Why piggyback instead of crawl
 

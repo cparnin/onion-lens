@@ -16,7 +16,7 @@ default without a hash-based image filter in addition to the text gate.
 
 ## Handling secrets
 
-- The OpenAI key is read from `OPENAI_API_KEY`, loaded from a gitignored `.env`.
+- The Anthropic key is read from `ANTHROPIC_API_KEY`, loaded from a gitignored `.env`.
 - `.env` and the local `*.db` knowledge base are gitignored and must never be
   committed.
 

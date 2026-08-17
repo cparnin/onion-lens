@@ -36,7 +36,7 @@ FALLBACK_HTML = """
 
 
 def make_engine():
-    return AhmiaSearch(Config(openai_api_key="test"))
+    return AhmiaSearch(Config(anthropic_api_key="test"))
 
 
 def test_parses_result_fields_including_last_seen():

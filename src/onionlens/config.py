@@ -13,9 +13,8 @@ except ImportError:  # dotenv is optional; env vars still work without it
 
 @dataclass
 class Config:
-    openai_api_key: str
-    chat_model: str = "gpt-4o-mini"
-    embedding_model: str = "text-embedding-3-small"
+    anthropic_api_key: str
+    chat_model: str = "claude-haiku-4-5"
     ahmia_base_url: str = "https://ahmia.fi"
     request_timeout: int = 20
     user_agent: str = (
@@ -32,13 +31,12 @@ class Config:
     @classmethod
     def load(cls) -> "Config":
         return cls(
-            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
-            chat_model=os.getenv("ONIONLENS_CHAT_MODEL", "gpt-4o-mini"),
-            embedding_model=os.getenv("ONIONLENS_EMBED_MODEL", "text-embedding-3-small"),
+            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            chat_model=os.getenv("ONIONLENS_CHAT_MODEL", "claude-haiku-4-5"),
             db_path=os.getenv("ONIONLENS_DB", "onionlens.db"),
             max_rows=int(os.getenv("ONIONLENS_MAX_ROWS", "5000")),
         )
 
     @property
-    def has_openai(self) -> bool:
-        return bool(self.openai_api_key)
+    def has_anthropic(self) -> bool:
+        return bool(self.anthropic_api_key)

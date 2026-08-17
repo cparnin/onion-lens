@@ -4,8 +4,10 @@ Takes the raw result list and asks the model to do what the existing engines
 cannot: cluster by theme, pull out shared entities, flag likely mirror or scam
 duplicates, and suggest follow-up searches. Returns structured JSON.
 
-Input is capped at config.max_correlate and descriptions are truncated, so the
-per-run token cost stays bounded no matter how many results were fetched.
+Uses the Anthropic API with structured outputs, so the response is guaranteed
+to match the schema below. Input is capped at config.max_correlate and
+descriptions are truncated, so the per-run token cost stays bounded no matter
+how many results were fetched.
 """
 
 import json
@@ -25,16 +27,58 @@ Rules:
 - Work only from the provided metadata. Do not invent onion addresses, handles,
   or facts.
 - Focus on connections: shared operators, mirrored sites, reused handles or
-  keys, and probable scams or phishing clones.
+  keys, and probable scams or phishing clones."""
 
-Return strict JSON with this shape:
-{
-  "summary": string,
-  "clusters": [{"theme": string, "addresses": [string], "note": string}],
-  "entities": {"handles": [string], "wallets": [string], "emails": [string]},
-  "likely_duplicates_or_scams": [{"addresses": [string], "reason": string}],
-  "suggested_followups": [string]
-}"""
+_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary": {"type": "string"},
+        "clusters": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "theme": {"type": "string"},
+                    "addresses": {"type": "array", "items": {"type": "string"}},
+                    "note": {"type": "string"},
+                },
+                "required": ["theme", "addresses", "note"],
+                "additionalProperties": False,
+            },
+        },
+        "entities": {
+            "type": "object",
+            "properties": {
+                "handles": {"type": "array", "items": {"type": "string"}},
+                "wallets": {"type": "array", "items": {"type": "string"}},
+                "emails": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["handles", "wallets", "emails"],
+            "additionalProperties": False,
+        },
+        "likely_duplicates_or_scams": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "addresses": {"type": "array", "items": {"type": "string"}},
+                    "reason": {"type": "string"},
+                },
+                "required": ["addresses", "reason"],
+                "additionalProperties": False,
+            },
+        },
+        "suggested_followups": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": [
+        "summary",
+        "clusters",
+        "entities",
+        "likely_duplicates_or_scams",
+        "suggested_followups",
+    ],
+    "additionalProperties": False,
+}
 
 _EMPTY = {
     "summary": "",
@@ -65,18 +109,17 @@ def correlate(
     results = results[: config.max_correlate]
 
     if client is None:
-        from openai import OpenAI
+        from anthropic import Anthropic
 
-        client = OpenAI(api_key=config.openai_api_key)
+        client = Anthropic(api_key=config.anthropic_api_key)
 
     user = f"Query: {query}\n\nResults:\n{_compact(results)}"
-    resp = client.chat.completions.create(
+    resp = client.messages.create(
         model=config.chat_model,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": user},
-        ],
+        max_tokens=4096,
+        system=_SYSTEM,
+        output_config={"format": {"type": "json_schema", "schema": _SCHEMA}},
+        messages=[{"role": "user", "content": user}],
     )
     if meter is not None:
         usage = getattr(resp, "usage", None)
@@ -84,10 +127,13 @@ def correlate(
             meter.add(
                 "correlation",
                 config.chat_model,
-                getattr(usage, "prompt_tokens", 0),
-                getattr(usage, "completion_tokens", 0),
+                getattr(usage, "input_tokens", 0),
+                getattr(usage, "output_tokens", 0),
             )
+    if getattr(resp, "stop_reason", None) == "refusal":
+        return {**_EMPTY, "summary": "Correlation declined by the model's safety policy."}
     try:
-        return json.loads(resp.choices[0].message.content)
-    except (json.JSONDecodeError, AttributeError, IndexError):
+        text = next(b.text for b in resp.content if getattr(b, "type", "") == "text")
+        return json.loads(text)
+    except (json.JSONDecodeError, AttributeError, StopIteration):
         return {**_EMPTY, "summary": "Correlation returned unparseable output."}

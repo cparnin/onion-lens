@@ -100,20 +100,18 @@ def main(argv=None) -> int:
                             title="entities found", border_style="green"))
 
     if not args.no_store:
-        if config.has_openai:
-            try:
-                store = Store(config)
-                added = store.upsert(results, meter)
-                console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
-                store.close()
-            except Exception as exc:
-                console.print(f"[yellow]Store skipped:[/yellow] {exc}")
-        else:
-            console.print("[yellow]Store skipped: OPENAI_API_KEY not set.[/yellow]")
+        # The knowledge base is local FTS5; no API key needed to store results.
+        try:
+            store = Store(config)
+            added = store.upsert(results)
+            console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
+            store.close()
+        except Exception as exc:
+            console.print(f"[yellow]Store skipped:[/yellow] {exc}")
 
     if not args.no_ai:
-        if not config.has_openai:
-            console.print("[yellow]AI correlation skipped: OPENAI_API_KEY not set.[/yellow]")
+        if not config.has_anthropic:
+            console.print("[yellow]AI correlation skipped: ANTHROPIC_API_KEY not set.[/yellow]")
         else:
             console.print("[dim]Correlating ...[/dim]")
             try:

@@ -4,8 +4,8 @@
 - Ahmia clearnet adapter
 - Safety gate and per-result screening
 - Local entity extraction
-- SQLite + embedding knowledge base
-- OpenAI correlation
+- SQLite FTS5 + local embedding knowledge base
+- Claude correlation
 - Rich CLI
 
 ## Next: add Torch as a second engine

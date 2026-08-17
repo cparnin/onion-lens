@@ -1,15 +1,14 @@
 """Cost estimation.
 
-Prices are USD per 1M tokens and are estimates. Update this table if OpenAI
+Prices are USD per 1M tokens and are estimates. Update this table if Anthropic
 changes pricing. The CostMeter accumulates real token usage returned by the API
 so every run can report what it actually cost.
 """
 
 PRICES = {
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    "gpt-4o": {"input": 2.50, "output": 10.00},
-    "text-embedding-3-small": {"input": 0.02, "output": 0.0},
-    "text-embedding-3-large": {"input": 0.13, "output": 0.0},
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+    "claude-sonnet-5": {"input": 3.00, "output": 15.00},
+    "claude-opus-5": {"input": 5.00, "output": 25.00},
 }
 
 
