@@ -64,6 +64,31 @@ onionlens "breach forum" --no-ai      # skip the AI step, still get results + en
 Every run stores results in a local `onionlens.db` so correlation improves as
 your knowledge base grows across sessions.
 
+## Writing good searches
+
+Ahmia is a full-text search engine that matches the **words** in your query
+against indexed site titles and descriptions. A few things follow from that:
+
+- **It is OR, not AND.** Every word is matched independently and results are
+  ranked by relevance, so a page that matches only one of your words still
+  comes back. Adding words *widens* the result set (pages matching more words
+  just rank higher); it does not narrow to the intersection. There is no way to
+  require all terms.
+- **There are no operators.** `+`, `-`, quotes, and `AND`/`OR` are treated as
+  literal words, not syntax. `alpha + bravo` searches for `alpha`, `+`, and
+  `bravo`.
+- **One or two distinctive keywords beat a long phrase.** If you want the
+  overlap of several ideas, pick the single rarest word and skim the rest by
+  eye. A three-word query returns everything matching any of the three.
+- **Use the vocabulary the sites use.** Listings describe themselves with their
+  own market jargon, not plain English, so search those terms directly.
+- **Zero results means your words are not in the index, not that nothing
+  exists.** Broaden to a single common term and work down from there.
+
+Every run prints a one-line hint about how your query landed (result count,
+whether you hit `--limit`, and whether a long query is widening the search), so
+you can adjust and re-run.
+
 ## Cost and size guardrails
 
 Using the default model (`claude-haiku-4-5`), a typical query costs about a
