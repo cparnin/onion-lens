@@ -223,7 +223,7 @@ class Store:
         placeholders = ",".join("?" * len(top))
         rows = self.conn.execute(
             "SELECT address, title, onion_url, description, source, last_seen "
-            "FROM results WHERE address IN (" + placeholders + ")",  # nosec B608
+            "FROM results WHERE address IN (" + placeholders + ")",
             top,
         ).fetchall()
         by_address = {row[0]: row for row in rows}
