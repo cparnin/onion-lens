@@ -19,39 +19,101 @@ from .store import Store
 console = Console()
 
 
+def _search_hint(query: str, count: int, limit: int) -> str:
+    """Tell the user how their query landed and how to change the outcome.
+
+    Ahmia is a full-text engine (Elasticsearch): it matches the words in the
+    query against indexed titles and descriptions, ranked by relevance. It does
+    OR matching by default, so more words widen the net, not narrow it. There
+    is no AND / '+' / boolean operator support, so query craft here is about
+    word choice, not syntax.
+    """
+    terms = [t for t in query.split() if t not in {"+", "-", "AND", "OR"}]
+    if count == 0:
+        return ("Ahmia found nothing. It matches whole words against indexed "
+                "titles/descriptions, so try fewer or more common terms "
+                "(one strong keyword beats a long phrase).")
+    if count >= limit:
+        return (f"Hit the --limit of {limit}; there are likely more. Raise "
+                f"--limit or add a distinguishing word to narrow the field.")
+    if len(terms) >= 4:
+        return (f"{count} results. Ahmia OR-matches every word, so a long query "
+                f"like this widens results; drop to the 1-2 strongest keywords "
+                f"for a tighter, more relevant set.")
+    return f"{count} results for {len(terms)} term(s)."
+
+
+def _short(address: str) -> str:
+    """Compact an onion address for inline display: keep the head and tail."""
+    host = address.replace(".onion", "")
+    if len(host) <= 20:
+        return address
+    return f"{host[:10]}…{host[-6:]}.onion"
+
+
+def _refs(addresses, index) -> str:
+    """Render a list of addresses as their result numbers (#1, #2), so long
+    onion strings never repeat outside the reference table."""
+    out = []
+    for a in addresses:
+        n = index.get(a)
+        out.append(f"[bold]#{n}[/bold]" if n else f"[dim]{_short(a)}[/dim]")
+    return ", ".join(out) if out else "[dim](none)[/dim]"
+
+
 def _render_results(results) -> None:
-    # show_lines + overflow="fold" so long onion addresses wrap in full and stay
-    # copy-pasteable instead of being truncated to fit the terminal width.
-    table = Table(title="Indexed onion services", header_style="bold cyan", show_lines=True)
-    table.add_column("#", style="dim", width=3)
-    table.add_column("Title", style="bold", max_width=34, overflow="fold")
-    table.add_column("Onion address", style="green", overflow="fold")
-    table.add_column("Last seen", style="dim", no_wrap=True)
+    table = Table(title="Indexed onion services", header_style="bold cyan",
+                  show_lines=True, expand=True)
+    table.add_column("#", style="bold cyan", width=3, justify="right")
+    table.add_column("Title", style="bold white", ratio=3, overflow="fold")
+    table.add_column("Onion", style="green", ratio=2, no_wrap=True)
+    table.add_column("Last seen", style="dim", no_wrap=True, justify="right")
     for i, r in enumerate(results, 1):
-        table.add_row(str(i), r.title, r.address, r.last_seen or "-")
+        table.add_row(str(i), r.title, _short(r.address), r.last_seen or "-")
     console.print(table)
 
 
-def _render_correlation(report: dict) -> None:
+def _render_correlation(report: dict, index: dict) -> None:
     if report.get("summary"):
-        console.print(Panel(report["summary"], title="AI summary", border_style="cyan"))
-    for c in report.get("clusters") or []:
-        body = f"[bold]{c.get('theme', '')}[/bold]\n{c.get('note', '')}\n" + "\n".join(
-            f"  - {a}" for a in c.get("addresses", [])
-        )
-        console.print(Panel(body, border_style="blue", title="cluster"))
-    for s in report.get("likely_duplicates_or_scams") or []:
-        console.print(
-            Panel(
-                f"{', '.join(s.get('addresses', []))}\n{s.get('reason', '')}",
-                title="possible duplicate or scam",
-                border_style="yellow",
+        console.print(Panel(report["summary"], title="[bold]Summary[/bold]",
+                            border_style="cyan", padding=(0, 1)))
+
+    clusters = report.get("clusters") or []
+    if clusters:
+        blocks = []
+        for c in clusters:
+            blocks.append(
+                f"[bold blue]▸ {c.get('theme', '')}[/bold blue]  "
+                f"({_refs(c.get('addresses', []), index)})\n"
+                f"  {c.get('note', '')}"
             )
-        )
+        console.print(Panel("\n\n".join(blocks), title="[bold]Clusters[/bold]",
+                            border_style="blue", padding=(0, 1)))
+
+    flags = report.get("likely_duplicates_or_scams") or []
+    if flags:
+        blocks = [
+            f"[bold yellow]⚠ {_refs(s.get('addresses', []), index)}[/bold yellow]\n"
+            f"  {s.get('reason', '')}"
+            for s in flags
+        ]
+        console.print(Panel("\n\n".join(blocks),
+                            title="[bold]Flags: mirrors, duplicates, scams[/bold]",
+                            border_style="yellow", padding=(0, 1)))
+
     followups = report.get("suggested_followups") or []
     if followups:
-        console.print(Panel("\n".join(f"- {f}" for f in followups),
-                            title="suggested follow-ups", border_style="magenta"))
+        console.print(Panel("\n".join(f"[magenta]→[/magenta] {f}" for f in followups),
+                            title="[bold]Suggested follow-ups[/bold]",
+                            border_style="magenta", padding=(0, 1)))
+
+
+def _render_reference(results) -> None:
+    """Full copy-pasteable addresses, keyed by result number."""
+    lines = [f"[cyan]#{i}[/cyan]  [green]{r.address}[/green]"
+             for i, r in enumerate(results, 1)]
+    console.print(Panel("\n".join(lines), title="[bold]Full addresses[/bold]",
+                        border_style="dim", padding=(0, 1)))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,7 +146,7 @@ def main(argv=None) -> int:
         return 1
 
     if not results:
-        console.print("[yellow]No results found.[/yellow]")
+        console.print(f"[yellow]No results.[/yellow] {_search_hint(args.query, 0, limit)}")
         return 0
 
     if engine.degraded:
@@ -92,12 +154,19 @@ def main(argv=None) -> int:
                       "changed; results could be incomplete (see search/ahmia.py).[/yellow]")
 
     _render_results(results)
+    console.print(f"[dim]{_search_hint(args.query, len(results), limit)}[/dim]")
 
+    index = {r.address: i for i, r in enumerate(results, 1)}
+
+    # Only surface entities the table does not already show. Onion addresses are
+    # in the reference list, so a panel that just repeats them adds no signal;
+    # wallets, emails, and PGP blocks are the ones worth calling out.
     blob = " ".join(f"{r.title} {r.description} {r.onion_url}" for r in results)
-    entities = extract_entities(blob)
+    entities = {k: v for k, v in extract_entities(blob).items() if k != "onion"}
     if entities:
-        console.print(Panel("\n".join(f"[bold]{k}[/bold]: {', '.join(v)}" for k, v in entities.items()),
-                            title="entities found", border_style="green"))
+        console.print(Panel(
+            "\n".join(f"[bold]{k}[/bold]: {', '.join(v)}" for k, v in entities.items()),
+            title="[bold]Entities found[/bold]", border_style="green", padding=(0, 1)))
 
     if not args.no_store:
         # The knowledge base is local FTS5; no API key needed to store results.
@@ -116,10 +185,11 @@ def main(argv=None) -> int:
             console.print("[dim]Correlating ...[/dim]")
             try:
                 report = correlate(config, args.query, results, meter=meter)
-                _render_correlation(report)
+                _render_correlation(report, index)
             except Exception as exc:
                 console.print(f"[yellow]Correlation skipped:[/yellow] {exc}")
 
+    _render_reference(results)
     console.print(f"[dim]Cost this run: {meter.summary()}[/dim]")
     return 0
 

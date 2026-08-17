@@ -27,7 +27,20 @@ Rules:
 - Work only from the provided metadata. Do not invent onion addresses, handles,
   or facts.
 - Focus on connections: shared operators, mirrored sites, reused handles or
-  keys, and probable scams or phishing clones."""
+  keys, and probable scams or phishing clones.
+
+Style:
+- Be concise. One or two sentences per note or reason; no filler.
+- Do not repeat a point across sections. If the summary states a fact, a
+  cluster or flag note should add detail, not restate it.
+- Refer to sites by their position in the list (the first site, sites 1 and 2),
+  never by pasting the full onion address into prose.
+- Use likely_duplicates_or_scams only for actual mirrors, duplicate listings,
+  clones, or fraud/impersonation. Do not put a single distinct site there just
+  because its content is alarming.
+- On v3 onion addresses (56 chars), a shared multi-character prefix is not
+  chance: it means someone vanity-generated matching keys, so treat it as a
+  strong signal of the same operator or a deliberate clone, and say so."""
 
 _SCHEMA = {
     "type": "object",
