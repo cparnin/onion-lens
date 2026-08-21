@@ -1,6 +1,6 @@
 requests>=2.31
 beautifulsoup4>=4.12
-openai>=1.30
+openai>=3.2.0
 numpy>=1.26
 rich>=13.7
 python-dotenv>=1.0
