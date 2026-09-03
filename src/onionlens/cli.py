@@ -182,7 +182,11 @@ def _render_recall(onion_hits: list[dict], intel_hits: list[dict]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="onionlens", description="AI correlation over onion search engines.")
+    p = argparse.ArgumentParser(
+        prog="onionlens",
+        description="AI correlation over onion search engines.",
+        epilog="Also: 'onionlens recall <query>' searches the local knowledge "
+               "base (past sightings and stored intel) with no network or API cost.")
     p.add_argument("query", help="natural language topic to search for")
     p.add_argument("--limit", type=int, default=25, help="max results to fetch (default 25)")
     p.add_argument("--no-ai", action="store_true", help="skip the AI correlation step")
