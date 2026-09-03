@@ -16,6 +16,7 @@ Size is bounded: the table is capped at config.max_rows and the oldest rows are
 pruned on each write, so the database cannot grow without limit.
 """
 
+import os
 import re
 import sqlite3
 import struct
@@ -45,6 +46,11 @@ class Store:
     @property
     def embedder(self):
         if self._embedder is None:
+            # The first use downloads the model from the HF Hub; its progress
+            # bars and auth warnings interleave badly with Rich output, so
+            # silence them before the import that triggers the download.
+            os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+            os.environ.setdefault("HF_HUB_VERBOSITY", "error")
             from fastembed import TextEmbedding
 
             self._embedder = TextEmbedding()  # default: bge-small-en-v1.5, 384 dims

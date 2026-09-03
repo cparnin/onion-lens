@@ -30,3 +30,13 @@ def test_correlate_empty_results():
     cfg = Config(anthropic_api_key="x")
     report = correlate(cfg, "q", [])
     assert report["summary"] == "No results to correlate."
+    assert report["unrelated"] == []
+
+
+def test_correlate_passes_through_unrelated():
+    from conftest import FakeClient
+
+    cfg = Config(anthropic_api_key="x")
+    client = FakeClient('{"summary": "ok", "unrelated": ["a0.onion"]}')
+    report = correlate(cfg, "q", make(2), client=client)
+    assert report["unrelated"] == ["a0.onion"]

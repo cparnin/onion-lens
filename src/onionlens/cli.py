@@ -61,7 +61,9 @@ def _refs(addresses, index) -> str:
     return ", ".join(out) if out else "[dim](none)[/dim]"
 
 
-def _render_results(results) -> None:
+def _render_results(results, unrelated=frozenset()) -> None:
+    """Render the result table. Rows the correlator judged unrelated to the
+    query (keyword-collision noise) are dimmed so signal reads first."""
     table = Table(title="Indexed onion services", header_style="bold cyan",
                   show_lines=True, expand=True)
     table.add_column("#", style="bold cyan", width=3, justify="right")
@@ -69,7 +71,11 @@ def _render_results(results) -> None:
     table.add_column("Onion", style="green", ratio=2, no_wrap=True)
     table.add_column("Last seen", style="dim", no_wrap=True, justify="right")
     for i, r in enumerate(results, 1):
-        table.add_row(str(i), r.title, _short(r.address), r.last_seen or "-")
+        if r.address in unrelated:
+            table.add_row(str(i), f"{r.title} (unrelated)", _short(r.address),
+                          r.last_seen or "-", style="dim")
+        else:
+            table.add_row(str(i), r.title, _short(r.address), r.last_seen or "-")
     console.print(table)
 
 
@@ -153,10 +159,37 @@ def main(argv=None) -> int:
         console.print("[yellow]Note: parsed via fallback. Ahmia's markup may have "
                       "changed; results could be incomplete (see search/ahmia.py).[/yellow]")
 
-    _render_results(results)
-    console.print(f"[dim]{_search_hint(args.query, len(results), limit)}[/dim]")
-
     index = {r.address: i for i, r in enumerate(results, 1)}
+
+    if not args.no_store:
+        # The knowledge base is local FTS5; no API key needed to store results.
+        try:
+            store = Store(config)
+            with console.status("[dim]Indexing locally ...[/dim]"):
+                added = store.upsert(results)
+            console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
+            store.close()
+        except Exception as exc:
+            console.print(f"[yellow]Store skipped:[/yellow] {exc}")
+
+    # Correlate before rendering so the table can carry the relevance verdict.
+    report = None
+    if not args.no_ai:
+        if not config.has_anthropic:
+            console.print("[yellow]AI correlation skipped: ANTHROPIC_API_KEY not set.[/yellow]")
+        else:
+            try:
+                with console.status("[dim]Correlating ...[/dim]"):
+                    report = correlate(config, args.query, results, meter=meter)
+            except Exception as exc:
+                console.print(f"[yellow]Correlation skipped:[/yellow] {exc}")
+
+    unrelated = set(report.get("unrelated") or []) if report else set()
+    _render_results(results, unrelated)
+    console.print(f"[dim]{_search_hint(args.query, len(results), limit)}[/dim]")
+    if unrelated:
+        console.print(f"[dim]{len(unrelated)} result(s) judged unrelated to the "
+                      f"query and dimmed above.[/dim]")
 
     # Only surface entities the table does not already show. Onion addresses are
     # in the reference list, so a panel that just repeats them adds no signal;
@@ -168,26 +201,8 @@ def main(argv=None) -> int:
             "\n".join(f"[bold]{k}[/bold]: {', '.join(v)}" for k, v in entities.items()),
             title="[bold]Entities found[/bold]", border_style="green", padding=(0, 1)))
 
-    if not args.no_store:
-        # The knowledge base is local FTS5; no API key needed to store results.
-        try:
-            store = Store(config)
-            added = store.upsert(results)
-            console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
-            store.close()
-        except Exception as exc:
-            console.print(f"[yellow]Store skipped:[/yellow] {exc}")
-
-    if not args.no_ai:
-        if not config.has_anthropic:
-            console.print("[yellow]AI correlation skipped: ANTHROPIC_API_KEY not set.[/yellow]")
-        else:
-            console.print("[dim]Correlating ...[/dim]")
-            try:
-                report = correlate(config, args.query, results, meter=meter)
-                _render_correlation(report, index)
-            except Exception as exc:
-                console.print(f"[yellow]Correlation skipped:[/yellow] {exc}")
+    if report is not None:
+        _render_correlation(report, index)
 
     _render_reference(results)
     console.print(f"[dim]Cost this run: {meter.summary()}[/dim]")

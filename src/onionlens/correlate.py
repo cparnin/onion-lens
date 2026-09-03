@@ -40,7 +40,11 @@ Style:
   because its content is alarming.
 - On v3 onion addresses (56 chars), a shared multi-character prefix is not
   chance: it means someone vanity-generated matching keys, so treat it as a
-  strong signal of the same operator or a deliberate clone, and say so."""
+  strong signal of the same operator or a deliberate clone, and say so.
+- In unrelated, list the exact onion addresses of results that are clearly
+  keyword-collision noise: matched a word in the query but have nothing to do
+  with its investigative intent (for example, software licenses in a query
+  about identity documents). When in doubt, leave a result out of unrelated."""
 
 _SCHEMA = {
     "type": "object",
@@ -82,6 +86,7 @@ _SCHEMA = {
             },
         },
         "suggested_followups": {"type": "array", "items": {"type": "string"}},
+        "unrelated": {"type": "array", "items": {"type": "string"}},
     },
     "required": [
         "summary",
@@ -89,6 +94,7 @@ _SCHEMA = {
         "entities",
         "likely_duplicates_or_scams",
         "suggested_followups",
+        "unrelated",
     ],
     "additionalProperties": False,
 }
@@ -99,6 +105,7 @@ _EMPTY = {
     "entities": {},
     "likely_duplicates_or_scams": [],
     "suggested_followups": [],
+    "unrelated": [],
 }
 
 

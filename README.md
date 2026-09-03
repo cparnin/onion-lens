@@ -37,6 +37,10 @@ your query
   -> AI correlation (Claude): clusters, entities, likely duplicates, follow-ups
 ```
 
+Correlation runs before the table is printed, so results the AI judges to be
+keyword-collision noise (unrelated to the query's intent) are dimmed in place.
+Numbering never changes: cluster and flag notes always refer to the same rows.
+
 Full diagram in [docs/architecture.md](docs/architecture.md).
 
 ## Install

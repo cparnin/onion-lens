@@ -41,8 +41,11 @@ flowchart TD
    matches, merged with reciprocal rank fusion. Fully local, no API calls.
    Degrades to keyword-only if the embedding model is unavailable.
 8. **AI correlation** (`correlate.py`). One Anthropic API call (Claude) returns
-   clusters, shared entities, likely duplicates or scams, and suggested
-   follow-ups as schema-enforced JSON via structured outputs.
+   clusters, shared entities, likely duplicates or scams, suggested follow-ups,
+   and a per-result relevance verdict (the `unrelated` list) as schema-enforced
+   JSON via structured outputs. Correlation runs before the table renders so
+   unrelated rows can be dimmed in place; row numbering is never reordered, so
+   the model's positional references stay correct.
 
 ## Why piggyback instead of crawl
 
