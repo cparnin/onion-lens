@@ -32,6 +32,7 @@ duplicates, and suggests follow-up searches.
 your query
   -> Ahmia (clearnet, no Tor needed)
   -> safety screen + dedupe
+  -> clearnet intel: HIBP breach catalog, breach-news RSS, ransomware leak-site tracker
   -> local entity extraction (wallets, emails, PGP, onion links)
   -> persistent knowledge base (SQLite FTS5 + local embeddings, fully local)
   -> AI correlation (Claude): clusters, entities, likely duplicates, follow-ups
@@ -40,6 +41,13 @@ your query
 Correlation runs before the table is printed, so results the AI judges to be
 keyword-collision noise (unrelated to the query's intent) are dimmed in place.
 Numbering never changes: cluster and flag notes always refer to the same rows.
+
+The intel sources are passive, public, and unauthenticated: the Have I Been
+Pwned breach catalog, breach-news RSS feeds (databreaches.net,
+BleepingComputer), and the ransomwatch leak-site tracker. They surface the
+real-world breach or incident behind what onion vendors are selling, and the
+AI uses them as labeled context when correlating. Responses are cached on disk
+(a day for catalogs, an hour for news) so repeat runs cost one fetch.
 
 Full diagram in [docs/architecture.md](docs/architecture.md).
 
@@ -63,10 +71,15 @@ No Tor is required. Ahmia is reached over normal HTTPS.
 onionlens "ransomware leak sites"
 onionlens "vendor handle acme" --limit 40
 onionlens "breach forum" --no-ai      # skip the AI step, still get results + entities
+onionlens "stolen ids" --no-intel     # skip the clearnet breach/news/leak-site feeds
+onionlens recall "driver license"     # search the local knowledge base: no network, no cost
 ```
 
 Every run stores results in a local `onionlens.db` so correlation improves as
-your knowledge base grows across sessions.
+your knowledge base grows across sessions. `onionlens recall` searches that
+history (past onion sightings and stored breach intel, hybrid keyword +
+semantic) and shows how long ago each row was stored; onion services churn
+fast, so old sightings are history, not live addresses.
 
 ## Writing good searches
 
@@ -109,6 +122,10 @@ Built-in limits keep both the bill and the database bounded:
 - The knowledge base is capped at `max_rows` (default 5000, set via
   `ONIONLENS_MAX_ROWS`). Oldest rows are pruned on every write, so the SQLite
   file cannot run away. At the default cap the database stays around 30-40 MB.
+- Intel records are capped separately, per source (`max_intel_rows`, default
+  500 each), so daily news churn can never evict onion sighting history.
+  At most `max_intel` (default 8) records per source are shown and sent to the
+  AI, so intel context adds only a few thousand input tokens per run.
 
 ## Safety
 

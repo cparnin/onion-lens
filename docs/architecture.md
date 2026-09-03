@@ -9,13 +9,17 @@ flowchart TD
     A[User query] --> B{Safety gate}
     B -- blocked --> X[Refuse]
     B -- allowed --> C[Ahmia adapter<br/>clearnet HTTPS]
+    B -- allowed --> K[Intel sources<br/>HIBP, news RSS, ransomwatch]
     C --> D[Parse HTML to results]
     D --> E{Safety screen<br/>per result}
     E -- drop --> D
     E -- keep --> F[Dedupe by onion address]
+    K --> E2{Safety screen<br/>per record}
     F --> G[Local entity extraction<br/>wallets, emails, PGP, onions]
     F --> H[Knowledge base<br/>SQLite FTS5 + local embeddings]
+    E2 --> H
     F --> I[AI correlation<br/>Claude]
+    E2 --> I
     G --> J[Rendered report]
     H --> J
     I --> J
@@ -46,6 +50,18 @@ flowchart TD
    JSON via structured outputs. Correlation runs before the table renders so
    unrelated rows can be dimmed in place; row numbering is never reordered, so
    the model's positional references stay correct.
+9. **Intel sources** (`intel/`). Clearnet context feeds, all passive, public,
+   and unauthenticated: the HIBP breach catalog, breach-news RSS
+   (databreaches.net, BleepingComputer), and the ransomwatch leak-site
+   tracker. Records have no onion address, so they live in their own
+   `intel` table (pruned per source, `max_intel_rows` each, so a chatty feed
+   can only evict its own history) and are fed to correlation as labeled
+   context, never mixed into the numbered result list. Fetches are cached on
+   disk with a TTL, and a stale cache is served when the network fails.
+10. **Recall** (`onionlens recall <query>`). Hybrid keyword + semantic search
+    over the local knowledge base, both onion sightings and stored intel.
+    Fully local, no API cost. Each hit shows its stored age, because onion
+    services churn fast and an old sighting is history, not a live address.
 
 ## Why piggyback instead of crawl
 

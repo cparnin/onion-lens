@@ -44,7 +44,12 @@ Style:
 - In unrelated, list the exact onion addresses of results that are clearly
   keyword-collision noise: matched a word in the query but have nothing to do
   with its investigative intent (for example, software licenses in a query
-  about identity documents). When in doubt, leave a result out of unrelated."""
+  about identity documents). When in doubt, leave a result out of unrelated.
+- A Context section may follow the results: known breaches, recent reporting,
+  and ransomware leak-site posts from clearnet sources. Use it to connect onion
+  results to real-world events (a vendor selling data matching a known breach,
+  for example), and say so in the summary or a cluster note. Context items are
+  not onion results: never put them in clusters or unrelated."""
 
 _SCHEMA = {
     "type": "object",
@@ -116,10 +121,25 @@ def _compact(results: list[SearchResult]) -> str:
     return "\n".join(lines)
 
 
+def _intel_context(intel: dict) -> str:
+    """Render intel records as labeled sections, truncated to bound cost."""
+    from .intel import SOURCE_LABELS
+
+    sections = []
+    for source, records in intel.items():
+        lines = [
+            f"- {r.title[:120]} ({r.date or 'undated'}): {r.summary[:200]}"
+            for r in records
+        ]
+        sections.append(f"{SOURCE_LABELS.get(source, source)}:\n" + "\n".join(lines))
+    return "\n\n".join(sections)
+
+
 def correlate(
     config: Config,
     query: str,
     results: list[SearchResult],
+    intel: dict | None = None,
     client=None,
     meter: CostMeter | None = None,
 ) -> dict:
@@ -134,6 +154,8 @@ def correlate(
         client = Anthropic(api_key=config.anthropic_api_key)
 
     user = f"Query: {query}\n\nResults:\n{_compact(results)}"
+    if intel:
+        user += f"\n\nContext (clearnet sources, not onion results):\n{_intel_context(intel)}"
     resp = client.messages.create(
         model=config.chat_model,
         max_tokens=4096,

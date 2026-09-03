@@ -5,7 +5,9 @@
 - Safety gate and per-result screening
 - Local entity extraction
 - SQLite FTS5 + local embedding knowledge base
-- Claude correlation
+- Claude correlation with per-result relevance verdicts
+- Clearnet intel sources: HIBP breach catalog, breach-news RSS, ransomwatch
+- `recall` command: local hybrid search over stored sightings and intel
 - Rich CLI
 
 ## Next: add Torch as a second engine

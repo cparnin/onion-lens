@@ -28,6 +28,20 @@ class Config:
     max_correlate: int = 40    # max results sent to the AI per run
     max_limit: int = 100       # ceiling on --limit regardless of what is passed
 
+    # Intel sources (clearnet context feeds; all public and unauthenticated)
+    hibp_url: str = "https://haveibeenpwned.com/api/v3/breaches"
+    ransomwatch_url: str = (
+        "https://raw.githubusercontent.com/joshhighet/ransomwatch/main/posts.json"
+    )
+    news_feeds: tuple = (
+        "https://databreaches.net/feed/",
+        "https://www.bleepingcomputer.com/feed/",
+    )
+    max_intel: int = 8          # per-source cap on records shown and sent to the AI
+    max_intel_rows: int = 500   # per-source cap in the knowledge base; oldest pruned
+    intel_cache_ttl: int = 86400  # catalogs change daily at most
+    news_cache_ttl: int = 3600    # feeds move faster
+
     @classmethod
     def load(cls) -> "Config":
         return cls(

@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from datetime import datetime, timezone
 
 from rich.console import Console
 from rich.panel import Panel
@@ -10,6 +11,7 @@ from rich.table import Table
 from .config import Config
 from .correlate import correlate
 from .extract import extract_entities
+from .intel import SOURCE_LABELS, gather_intel
 from .models import dedupe
 from .pricing import CostMeter
 from .safety import is_allowed
@@ -17,6 +19,24 @@ from .search import AhmiaSearch
 from .store import Store
 
 console = Console()
+
+
+def _age(stored_at) -> str:
+    """Human age of a stored row: how stale a recall hit is."""
+    if not stored_at:
+        return "?"
+    try:
+        then = datetime.fromisoformat(stored_at)
+    except ValueError:
+        return "?"
+    days = (datetime.now(timezone.utc) - then).days
+    if days <= 0:
+        return "today"
+    if days < 14:
+        return f"{days}d ago"
+    if days < 90:
+        return f"{days // 7}w ago"
+    return f"{days // 30}mo ago"
 
 
 def _search_hint(query: str, count: int, limit: int) -> str:
@@ -122,16 +142,83 @@ def _render_reference(results) -> None:
                         border_style="dim", padding=(0, 1)))
 
 
+def _render_intel(intel) -> None:
+    """Compact clearnet context: breaches, reporting, leak-site posts."""
+    blocks = []
+    for source, records in intel.items():
+        lines = [f"• {r.title}  [dim]{r.date or ''}[/dim]" for r in records]
+        blocks.append(f"[bold]{SOURCE_LABELS.get(source, source)}[/bold]\n" + "\n".join(lines))
+    console.print(Panel("\n\n".join(blocks),
+                        title="[bold]Breaches & reporting (clearnet)[/bold]",
+                        border_style="red", padding=(0, 1)))
+
+
+def _render_recall(onion_hits: list[dict], intel_hits: list[dict]) -> None:
+    if onion_hits:
+        table = Table(title="Knowledge base: onion sightings",
+                      header_style="bold cyan", show_lines=True, expand=True)
+        table.add_column("Title", style="bold white", ratio=3, overflow="fold")
+        table.add_column("Onion", style="green", ratio=2, overflow="fold")
+        table.add_column("Stored", style="dim", no_wrap=True, justify="right")
+        for hit in onion_hits:
+            table.add_row(hit["title"], hit["onion_url"], _age(hit.get("stored_at")))
+        console.print(table)
+        console.print("[dim]Onion services churn fast; a sighting more than a few "
+                      "weeks old is history, not a live address.[/dim]")
+    if intel_hits:
+        table = Table(title="Knowledge base: breaches & reporting",
+                      header_style="bold red", show_lines=True, expand=True)
+        table.add_column("Source", style="red", no_wrap=True)
+        table.add_column("Title", style="bold white", ratio=3, overflow="fold")
+        table.add_column("Date", style="dim", no_wrap=True)
+        table.add_column("Stored", style="dim", no_wrap=True, justify="right")
+        for hit in intel_hits:
+            table.add_row(hit["source"], hit["title"], hit.get("date") or "-",
+                          _age(hit.get("stored_at")))
+        console.print(table)
+    if not onion_hits and not intel_hits:
+        console.print("[yellow]No knowledge base matches.[/yellow] The KB grows "
+                      "with every search you run.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="onionlens", description="AI correlation over onion search engines.")
     p.add_argument("query", help="natural language topic to search for")
     p.add_argument("--limit", type=int, default=25, help="max results to fetch (default 25)")
     p.add_argument("--no-ai", action="store_true", help="skip the AI correlation step")
     p.add_argument("--no-store", action="store_true", help="do not persist results to the local knowledge base")
+    p.add_argument("--no-intel", action="store_true", help="skip clearnet intel sources (breaches, news, leak sites)")
     return p
 
 
+def recall_main(argv) -> int:
+    p = argparse.ArgumentParser(
+        prog="onionlens recall",
+        description="Search the local knowledge base: past onion sightings and "
+                    "stored breach intel. Fully local, no network, no API cost.")
+    p.add_argument("query", help="topic to recall")
+    p.add_argument("--k", type=int, default=15, help="max hits per section (default 15)")
+    args = p.parse_args(argv)
+
+    allowed, reason = is_allowed(args.query)
+    if not allowed:
+        console.print(f"[red]Refused:[/red] {reason}")
+        return 2
+
+    store = Store(Config.load())
+    try:
+        onion_hits = store.search(args.query, k=args.k)
+        intel_hits = store.search_intel(args.query, k=args.k)
+    finally:
+        store.close()
+    _render_recall(onion_hits, intel_hits)
+    return 0
+
+
 def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["recall"]:
+        return recall_main(argv[1:])
     args = build_parser().parse_args(argv)
     config = Config.load()
     meter = CostMeter()
@@ -161,12 +248,21 @@ def main(argv=None) -> int:
 
     index = {r.address: i for i, r in enumerate(results, 1)}
 
+    # Clearnet context: breach catalog, breach reporting, ransomware leak sites.
+    intel = {}
+    if not args.no_intel:
+        with console.status("[dim]Checking breach catalogs and reporting ...[/dim]"):
+            intel, intel_errors = gather_intel(config, args.query)
+        for name, err in intel_errors.items():
+            console.print(f"[yellow]Intel source {name} skipped:[/yellow] {err}")
+
     if not args.no_store:
         # The knowledge base is local FTS5; no API key needed to store results.
         try:
             store = Store(config)
             with console.status("[dim]Indexing locally ...[/dim]"):
                 added = store.upsert(results)
+                store.upsert_intel([r for recs in intel.values() for r in recs])
             console.print(f"[dim]Stored {added} results (knowledge base holds {store.count()} / {config.max_rows} max).[/dim]")
             store.close()
         except Exception as exc:
@@ -180,7 +276,7 @@ def main(argv=None) -> int:
         else:
             try:
                 with console.status("[dim]Correlating ...[/dim]"):
-                    report = correlate(config, args.query, results, meter=meter)
+                    report = correlate(config, args.query, results, intel=intel, meter=meter)
             except Exception as exc:
                 console.print(f"[yellow]Correlation skipped:[/yellow] {exc}")
 
@@ -190,6 +286,9 @@ def main(argv=None) -> int:
     if unrelated:
         console.print(f"[dim]{len(unrelated)} result(s) judged unrelated to the "
                       f"query and dimmed above.[/dim]")
+
+    if intel:
+        _render_intel(intel)
 
     # Only surface entities the table does not already show. Onion addresses are
     # in the reference list, so a panel that just repeats them adds no signal;

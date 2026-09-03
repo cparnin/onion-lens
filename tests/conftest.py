@@ -14,6 +14,7 @@ class FakeMessages:
         self._payload = payload
 
     def create(self, model, max_tokens, system, output_config, messages):
+        self.last_messages = messages  # inspectable by tests
         block = _Obj(type="text", text=self._payload)
         return _Obj(
             content=[block],

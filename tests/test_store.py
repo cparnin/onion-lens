@@ -1,4 +1,5 @@
 from onionlens.config import Config
+from onionlens.intel.base import IntelRecord
 from onionlens.models import SearchResult
 from onionlens.store import Store
 
@@ -88,6 +89,50 @@ def test_backfill_replaces_incompatible_vectors(tmp_path):
     store.search("site")
     blobs = [row[0] for row in store.conn.execute("SELECT embedding FROM results")]
     assert all(b is not None and len(b) == 16 * 4 for b in blobs)
+
+
+def make_intel(n, source="hibp"):
+    return [
+        IntelRecord(source=source, title=f"breach {i}", summary="stolen data",
+                    date="2026-08-01", url=f"http://example.com/{source}/{i}")
+        for i in range(n)
+    ]
+
+
+def test_upsert_intel_and_search(tmp_path):
+    store = make_store(tmp_path)
+    store.upsert_intel([
+        IntelRecord(source="hibp", title="license dump", summary="ids leaked",
+                    date="2026-08-01", url="http://example.com/1"),
+        IntelRecord(source="news", title="bakery breach", summary="cookies",
+                    date="2026-08-02", url="http://example.com/2"),
+    ])
+    assert store.intel_count() == 2
+    hits = store.search_intel("license")
+    assert hits and hits[0]["title"] == "license dump"
+    assert hits[0]["stored_at"]  # age is recorded
+
+
+def test_intel_prune_is_per_source(tmp_path):
+    store = make_store(tmp_path, max_intel_rows=3)
+    store.upsert_intel(make_intel(5, source="news"))
+    store.upsert_intel(make_intel(2, source="hibp"))
+    counts = dict(store.conn.execute(
+        "SELECT source, COUNT(*) FROM intel GROUP BY source"))
+    assert counts == {"news": 3, "hibp": 2}  # news capped, hibp untouched
+
+
+def test_intel_upsert_no_duplicates(tmp_path):
+    store = make_store(tmp_path)
+    store.upsert_intel(make_intel(2))
+    store.upsert_intel(make_intel(2))
+    assert store.intel_count() == 2
+
+
+def test_search_reports_stored_at(tmp_path):
+    store = make_store(tmp_path)
+    store.upsert(make(1))
+    assert store.search("site")[0]["stored_at"]
 
 
 def test_migrates_fts_only_schema(tmp_path):

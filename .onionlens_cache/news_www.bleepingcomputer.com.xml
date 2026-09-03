@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+        xmlns:content="http://purl.org/rss/1.0/modules/content/"
+        xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:atom="http://www.w3.org/2005/Atom"
+        >
+
+<channel>
+        <title>BleepingComputer</title>
+
+        <link>https://www.bleepingcomputer.com/</link>
+        <description>BleepingComputer - All Stories</description>
+        <pubDate>Thu, 03 Sep 2026 12:32:38 GMT</pubDate>
+        <generator>https://www.bleepingcomputer.com/</generator>
+        <language>en</language>
+        <atom:link href="https://www.bleepingcomputer.com/feed/" rel="self" type="application/rss+xml" />
+        
+ <item>
+        <title>Microsoft says KB5120998 Windows update resets desktop settings</title>
+        <link>https://www.bleepingcomputer.com/news/microsoft/microsoft-says-kb5120998-windows-update-resets-desktop-settings/</link>
+        <pubDate>Thu, 03 Sep 2026 08:16:32 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Microsoft]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/microsoft/microsoft-says-kb5120998-windows-update-resets-desktop-settings/</guid>
+        <description><![CDATA[Microsoft has confirmed that desktop settings are lost or reset on some Windows devices after installing the KB5120998 August 2026 preview update. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Plex warns users to patch security vulnerabilities immediately</title>
+        <link>https://www.bleepingcomputer.com/news/security/plex-warns-users-to-patch-security-vulnerabilities-immediately/</link>
+        <pubDate>Thu, 03 Sep 2026 07:02:22 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/plex-warns-users-to-patch-security-vulnerabilities-immediately/</guid>
+        <description><![CDATA[Plex urged users this week to update their desktop clients and media servers immediately to patch multiple security vulnerabilities. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Microsoft Teams, Outlook fail to launch on ARM-based Windows PCs</title>
+        <link>https://www.bleepingcomputer.com/news/microsoft/microsoft-teams-outlook-fail-to-launch-on-arm-based-windows-pcs/</link>
+        <pubDate>Thu, 03 Sep 2026 04:55:25 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Microsoft]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/microsoft/microsoft-teams-outlook-fail-to-launch-on-arm-based-windows-pcs/</guid>
+        <description><![CDATA[Microsoft is working to fix a known issue that causes crashes and launch failures for Microsoft Teams and New Outlook users after installing updates released since the August 2026 Patch Tuesday. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Hackers exploit Sangoma Switchvox flaw to deploy reverse shells</title>
+        <link>https://www.bleepingcomputer.com/news/security/hackers-exploit-sangoma-switchvox-flaw-to-deploy-reverse-shells/</link>
+        <pubDate>Wed, 02 Sep 2026 17:00:13 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/hackers-exploit-sangoma-switchvox-flaw-to-deploy-reverse-shells/</guid>
+        <description><![CDATA[Attackers are actively exploiting CVE-2026-9586, an unauthenticated SQL injection vulnerability in the Sangoma Switchvox VoIP platform that can lead to remote code execution. [...]]]></description>
+ </item>
+
+ <item>
+        <title>WordPress backup plugin flaw exposes millions of sites to takeover attacks</title>
+        <link>https://www.bleepingcomputer.com/news/security/wordpress-backup-plugin-flaw-exposes-millions-of-sites-to-takeover-attacks/</link>
+        <pubDate>Wed, 02 Sep 2026 15:28:46 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/wordpress-backup-plugin-flaw-exposes-millions-of-sites-to-takeover-attacks/</guid>
+        <description><![CDATA[An SQL injection vulnerability in the All-in-One WP Migration and Backup plugin for WordPress could allow unauthenticated attackers to execute remote code and take control of affected websites. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Hackers exploit critical JFrog Artifactory flaw to forge admin tokens</title>
+        <link>https://www.bleepingcomputer.com/news/security/hackers-exploit-critical-jfrog-artifactory-flaw-to-forge-admin-tokens/</link>
+        <pubDate>Wed, 02 Sep 2026 11:47:08 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/hackers-exploit-critical-jfrog-artifactory-flaw-to-forge-admin-tokens/</guid>
+        <description><![CDATA[A critical authentication bypass vulnerability (CVE-2026-82329) in JFrog Artifactory is being exploited in attacks to create tokens that provide administrative access. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Ransomware protection for MSPs: A 6-point checklist for faster recovery</title>
+        <link>https://www.bleepingcomputer.com/news/security/ransomware-protection-for-msps-a-6-point-checklist-for-faster-recovery/</link>
+        <pubDate>Wed, 02 Sep 2026 10:02:12 -0400</pubDate>
+        <dc:creator>Sponsored by Acronis</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/ransomware-protection-for-msps-a-6-point-checklist-for-faster-recovery/</guid>
+        <description><![CDATA[Ransomware resilience requires more than backups or endpoint detection alone. Acronis outlines six capabilities MSPs should test across client environments, from reducing exposure and detecting attacks to preserving recovery points and restoring operations quickly. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Dropbox accounts breached through Lenovo email verification flaw</title>
+        <link>https://www.bleepingcomputer.com/news/security/dropbox-accounts-breached-through-lenovo-email-verification-flaw/</link>
+        <pubDate>Wed, 02 Sep 2026 08:30:22 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <category><![CDATA[Cloud]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/dropbox-accounts-breached-through-lenovo-email-verification-flaw/</guid>
+        <description><![CDATA[Dropbox is warning some users that an unauthorized party accessed their accounts by exploiting a flaw in Lenovo's email verification process to register fraudulent Lenovo IDs. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Microsoft Defender flags legitimate Google search links as malicious</title>
+        <link>https://www.bleepingcomputer.com/news/security/microsoft-defender-flags-legitimate-google-search-links-as-malicious/</link>
+        <pubDate>Wed, 02 Sep 2026 06:29:39 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <category><![CDATA[Google]]></category>
+
+        <category><![CDATA[Microsoft]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/microsoft-defender-flags-legitimate-google-search-links-as-malicious/</guid>
+        <description><![CDATA[Microsoft is investigating an issue causing the Defender for Office 365 security software to mistakenly block access to legitimate Google search links. [...]]]></description>
+ </item>
+
+ <item>
+        <title>US charges Russian for infecting 80,000 freelancers with malware</title>
+        <link>https://www.bleepingcomputer.com/news/security/us-charges-russian-for-infecting-80-000-freelancers-with-malware/</link>
+        <pubDate>Wed, 02 Sep 2026 05:06:48 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/us-charges-russian-for-infecting-80-000-freelancers-with-malware/</guid>
+        <description><![CDATA[A California federal grand jury has indicted a Russian national for his role in a phishing campaign that infected thousands of freelancers with TVRAT and DarkVNC malware. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Sality botnet infrastructure dismantled in joint global takedown</title>
+        <link>https://www.bleepingcomputer.com/news/security/sality-botnet-infrastructure-dismantled-in-joint-global-takedown/</link>
+        <pubDate>Wed, 02 Sep 2026 04:00:43 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/sality-botnet-infrastructure-dismantled-in-joint-global-takedown/</guid>
+        <description><![CDATA[International law enforcement agencies and private partners have seized Sality malware infrastructure in a joint action aiming to disrupt and take down the peer-to-peer (P2P) botnet. [...]]]></description>
+ </item>
+
+ <item>
+        <title>SonicWall warns of actively exploited SMA1000 zero-day flaws</title>
+        <link>https://www.bleepingcomputer.com/news/security/sonicwall-warns-of-actively-exploited-sma1000-zero-day-flaws/</link>
+        <pubDate>Wed, 02 Sep 2026 02:39:29 -0400</pubDate>
+        <dc:creator>Sergiu Gatlan</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/sonicwall-warns-of-actively-exploited-sma1000-zero-day-flaws/</guid>
+        <description><![CDATA[SonicWall warned customers that threat actors are chaining two new SMA1000 zero-day vulnerabilities in remote code execution attacks. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Hackers abuse Faronics Deploy admin tool to install ScreenConnect</title>
+        <link>https://www.bleepingcomputer.com/news/security/hackers-abuse-faronics-deploy-admin-tool-to-install-screenconnect/</link>
+        <pubDate>Tue, 01 Sep 2026 16:53:23 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/hackers-abuse-faronics-deploy-admin-tool-to-install-screenconnect/</guid>
+        <description><![CDATA[Phishing actors are abusing the legitimate Faronics Deploy endpoint-management platform to gain remote administrative control over victim computers and install the ScreenConnect remote support software. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Aesto Health says data breach affects over 9.5 million patients</title>
+        <link>https://www.bleepingcomputer.com/news/security/aesto-health-says-data-breach-affects-over-95-million-patients/</link>
+        <pubDate>Tue, 01 Sep 2026 15:28:17 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <category><![CDATA[Healthcare]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/aesto-health-says-data-breach-affects-over-95-million-patients/</guid>
+        <description><![CDATA[Aesto LLC, operating as Aesto Health, disclosed that a data breach discovered recently affects more than 9.5 million individuals. [...]]]></description>
+ </item>
+
+ <item>
+        <title>Critical Langflow flaw exploited to steal OpenAI and AWS keys</title>
+        <link>https://www.bleepingcomputer.com/news/security/critical-langflow-flaw-exploited-to-steal-openai-and-aws-keys/</link>
+        <pubDate>Tue, 01 Sep 2026 13:54:22 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+        
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/critical-langflow-flaw-exploited-to-steal-openai-and-aws-keys/</guid>
+        <description><![CDATA[Threat actors are exploiting an unauthenticated remote code execution vulnerability (CVE-2026-0768) in Langflow, an open-source framework for building AI applications, to steal credentials, tokens, and keys. [...]]]></description>
+ </item>
+
+</channel>
+</rss>

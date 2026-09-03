@@ -40,3 +40,22 @@ def test_correlate_passes_through_unrelated():
     client = FakeClient('{"summary": "ok", "unrelated": ["a0.onion"]}')
     report = correlate(cfg, "q", make(2), client=client)
     assert report["unrelated"] == ["a0.onion"]
+
+
+def test_correlate_includes_intel_context(fake_client):
+    from onionlens.intel.base import IntelRecord
+
+    cfg = Config(anthropic_api_key="x")
+    intel = {"hibp": [IntelRecord(source="hibp", title="BigID Leak: 153,000,000 accounts",
+                                  summary="identity documents", date="2026-08-01")]}
+    correlate(cfg, "q", make(2), intel=intel, client=fake_client)
+    prompt = fake_client.messages.last_messages[0]["content"]
+    assert "Context (clearnet sources" in prompt
+    assert "Known breaches (HIBP)" in prompt
+    assert "BigID Leak" in prompt
+
+
+def test_correlate_omits_context_without_intel(fake_client):
+    cfg = Config(anthropic_api_key="x")
+    correlate(cfg, "q", make(2), client=fake_client)
+    assert "Context" not in fake_client.messages.last_messages[0]["content"]
